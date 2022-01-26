@@ -1,0 +1,24 @@
+name: Build Shiba
+on: [ push, pull_request ]
+jobs:
+  build:
+    name: Build ${{ matrix.arch }} on Ubuntu
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [ "amd64", "arm64" ]
+    env:
+      CGO_ENABLED: "0"
+      GOOS: "linux"
+      GOARCH: "${{ matrix.arch }}"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: "1.17"
+      - run: go build -ldflags "-w -s" -o "shiba_${{ matrix.arch }}" github.com/moycat/shiba/cmd
+      - uses: actions/upload-artifact@v2
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        with:
+          name: "shiba_${{ matrix.arch }}"
+          path: "shiba_${{ matrix.arch }}"
