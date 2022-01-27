@@ -2,7 +2,6 @@ package model
 
 import (
 	"net"
-	"sort"
 )
 
 // NodeMap is the map of Node.
@@ -34,12 +33,6 @@ func (n *Node) DiffersFrom(nn *Node) bool {
 	if len(n.PodCIDRs) != len(nn.PodCIDRs) {
 		return true
 	}
-	sort.Slice(n.PodCIDRs, func(i, j int) bool {
-		return n.PodCIDRs[i].String() < n.PodCIDRs[j].String()
-	})
-	sort.Slice(nn.PodCIDRs, func(i, j int) bool {
-		return nn.PodCIDRs[i].String() < nn.PodCIDRs[j].String()
-	})
 	for i := range n.PodCIDRs {
 		if n.PodCIDRs[i].String() != nn.PodCIDRs[i].String() {
 			return true

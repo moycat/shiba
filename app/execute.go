@@ -64,7 +64,7 @@ func (shiba *Shiba) syncTunnels(nodeMap model.NodeMap) {
 	for linkName, node := range tunnelMap {
 		link, ok := linkMap[linkName]
 		if ok {
-			if link.LinkAttrs.Flags|net.FlagUp > 0 && link.Local.Equal(shiba.nodeIP) && link.Remote.Equal(node.IP) {
+			if shiba.isTunnelInSync(link, node) {
 				log.Debugf("tunnel [%s] to node [%s] is up and in sync, skipping", linkName, node.Name)
 				continue
 			}
@@ -83,6 +83,17 @@ func (shiba *Shiba) syncTunnels(nodeMap model.NodeMap) {
 		if err := netlink.LinkAdd(link); err != nil {
 			log.Errorf("failed to create tunnel [%s]: %v", linkName, err)
 			continue
+		}
+		for _, gatewayIP := range shiba.nodeGateways {
+			if err := netlink.AddrAdd(link, &netlink.Addr{
+				IPNet: &net.IPNet{
+					IP:   gatewayIP,
+					Mask: net.CIDRMask(len(gatewayIP)<<3, len(gatewayIP)<<3),
+				},
+			}); err != nil {
+				log.Errorf("failed to add address [%s] to tunnel [%s]: %v", gatewayIP, linkName, err)
+				continue
+			}
 		}
 		if err := netlink.LinkSetUp(link); err != nil {
 			log.Errorf("failed to bring tunnel [%s] up: %v", linkName, err)

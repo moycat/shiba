@@ -17,6 +17,7 @@ const (
 	cniConfigName      = "10-shiba.conflist"
 	cniNetName         = "shiba-net"
 	executeGracePeriod = time.Second
+	fireInterval       = time.Minute
 	iptablesChain      = "SHIBA"
 	nodeMapFilename    = "shiba-node-map"
 	tunnelPrefix       = "shiba."
@@ -30,6 +31,8 @@ type Shiba struct {
 	nodeName        string
 	nodeIP          net.IP // IPv6 only.
 	nodePodCIDRs    []*net.IPNet
+	nodeGateways    []net.IP
+	nodeGatewayMap  map[string]bool
 	nodeMap         model.NodeMap // When a map reaches here, it's immutable.
 	nodeMapLock     sync.Mutex
 	fireCh          chan struct{}
@@ -49,6 +52,7 @@ func NewShiba(client kubernetes.Interface, nodeName, cniConfigPath string, optio
 		cniConfigPath:   cniConfigPath,
 		nodeName:        nodeName,
 		nodeMap:         make(model.NodeMap),
+		nodeGatewayMap:  make(map[string]bool),
 		fireCh:          make(chan struct{}, 1),
 		apiTimeout:      options.APITimeout,
 		clusterPodCIDRs: options.ClusterPodCIDRs,
@@ -80,6 +84,7 @@ func (shiba *Shiba) Run(stopCh <-chan struct{}) error {
 	defer watcher.Stop()
 	watcherCh := watcher.ResultChan()
 	go shiba.execute(stopCh)
+	go shiba.periodicFire(stopCh)
 	for {
 		select {
 		case <-stopCh:
@@ -89,6 +94,23 @@ func (shiba *Shiba) Run(stopCh <-chan struct{}) error {
 				return fmt.Errorf("node watcher is closed")
 			}
 			shiba.processEvent(event)
+		}
+	}
+}
+
+// periodicFire triggers a sync every fireInterval, in case of external corruption.
+func (shiba *Shiba) periodicFire(stopCh <-chan struct{}) {
+	ticker := time.NewTicker(fireInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-stopCh:
+			return
+		case <-ticker.C:
+			select {
+			case shiba.fireCh <- struct{}{}:
+			default:
+			}
 		}
 	}
 }

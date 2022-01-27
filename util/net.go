@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"net"
+	"sort"
 )
 
 // IsV4 checks if a net.IP is an IPv4 address.
@@ -25,6 +26,10 @@ func ParseIPNets(ipNetStrings []string) ([]*net.IPNet, error) {
 		}
 		ipNets = append(ipNets, ipNet)
 	}
+	// Sort for later comparison.
+	sort.Slice(ipNets, func(i, j int) bool {
+		return ipNets[i].String() < ipNets[j].String()
+	})
 	return ipNets, nil
 }
 

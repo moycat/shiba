@@ -3,11 +3,15 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"os"
 	"path/filepath"
+	"reflect"
+	"syscall"
 
 	"github.com/moycat/shiba/model"
 	log "github.com/sirupsen/logrus"
+	"github.com/vishvananda/netlink"
 )
 
 func (shiba *Shiba) getAPIContext() (context.Context, func()) {
@@ -15,6 +19,37 @@ func (shiba *Shiba) getAPIContext() (context.Context, func()) {
 		return context.WithTimeout(context.Background(), shiba.apiTimeout)
 	}
 	return context.WithCancel(context.Background())
+}
+
+func (shiba *Shiba) isTunnelInSync(link *netlink.Ip6tnl, node *model.Node) bool {
+	if link.LinkAttrs.Flags|net.FlagUp == 0 {
+		log.Debugf("tunnel [%s] is not up", link.Name)
+		return false
+	}
+	if !link.Local.Equal(shiba.nodeIP) || !link.Remote.Equal(node.IP) {
+		log.Debugf("tunnel [%s] has bad peer config", link.Name)
+		return false
+	}
+	addrs, err := netlink.AddrList(link, netlink.FAMILY_ALL)
+	if err != nil {
+		log.Errorf("failed to get addr list of tunnel [%s]: %v", link.Name, err)
+		return false
+	}
+	addrMap := make(map[string]bool)
+	for _, addr := range addrs {
+		if addr.Scope != syscall.RT_SCOPE_UNIVERSE {
+			continue
+		}
+		if ones, bits := addr.Mask.Size(); ones != bits {
+			log.Debugf("tunnel [%s] has non-single address [%v]", link.Name, addr.IPNet.String())
+		}
+		addrMap[addr.IP.String()] = true
+	}
+	if !reflect.DeepEqual(addrMap, shiba.nodeGatewayMap) {
+		log.Debugf("tunnel [%s] has bad ips: %v", link.Name, addrMap)
+		return false
+	}
+	return true
 }
 
 func (shiba *Shiba) loadNodeMap() {

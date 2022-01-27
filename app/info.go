@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"net"
 	"strings"
 
 	"github.com/moycat/shiba/model"
@@ -34,7 +36,14 @@ func (shiba *Shiba) initSelf() error {
 	if len(shiba.nodePodCIDRs) == 0 {
 		return fmt.Errorf("node [%s] does not have a pod CIDR", shiba.nodeName)
 	}
-	log.Infof("node [%s] has pod cidrs %v", shiba.nodeName, shiba.nodePodCIDRs)
+	log.Infof("node [%s] has pod cidrs %v", shiba.nodeName, util.FormatIPNets(shiba.nodePodCIDRs))
+	// Generate the gateway IPs.
+	for _, cidr := range shiba.nodePodCIDRs {
+		gatewayIP := net.IP(big.NewInt(0).Add(big.NewInt(0).SetBytes(cidr.IP), big.NewInt(1)).Bytes())
+		shiba.nodeGateways = append(shiba.nodeGateways, gatewayIP)
+		shiba.nodeGatewayMap[gatewayIP.String()] = true
+	}
+	log.Infof("node [%s] has gateway ips %v", shiba.nodeName, shiba.nodeGateways)
 	return nil
 }
 
