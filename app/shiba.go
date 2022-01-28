@@ -71,29 +71,33 @@ func NewShiba(client kubernetes.Interface, nodeName, cniConfigPath string, optio
 	}
 	shiba.loadNodeMap()
 	shiba.fireCh <- struct{}{} // Trigger a sync for the loaded configuration.
+	log.Info("shiba initialized")
 	return shiba, nil
 }
 
 // Run starts the main routine until stopCh is closed.
 func (shiba *Shiba) Run(stopCh <-chan struct{}) error {
-	watcher, err := shiba.client.CoreV1().Nodes().Watch(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to watch node list: %w", err)
-	}
-	log.Info("shiba initialized")
-	defer watcher.Stop()
-	watcherCh := watcher.ResultChan()
 	go shiba.execute(stopCh)
 	go shiba.periodicFire(stopCh)
 	for {
-		select {
-		case <-stopCh:
-			return nil
-		case event, ok := <-watcherCh:
-			if !ok {
-				return fmt.Errorf("node watcher is closed")
+		watcher, err := shiba.client.CoreV1().Nodes().Watch(context.Background(), metav1.ListOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to watch node list: %w", err)
+		}
+		watcherCh := watcher.ResultChan()
+		log.Info("shiba started listening")
+		for {
+			select {
+			case <-stopCh:
+				watcher.Stop()
+				return nil
+			case event, ok := <-watcherCh:
+				if !ok {
+					log.Info("watch channel closed")
+					break
+				}
+				shiba.processEvent(event)
 			}
-			shiba.processEvent(event)
 		}
 	}
 }
