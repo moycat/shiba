@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"net"
+	"sort"
 
 	corev1 "k8s.io/api/core/v1"
 )
@@ -38,5 +39,9 @@ func ParseNodePodCIDRs(node *corev1.Node) ([]*net.IPNet, error) {
 		}
 		podCIDRs = append(podCIDRs, podCIDR)
 	}
+	// Sort for later comparison.
+	sort.Slice(podCIDRs, func(i, j int) bool {
+		return podCIDRs[i].String() < podCIDRs[j].String()
+	})
 	return podCIDRs, nil
 }
