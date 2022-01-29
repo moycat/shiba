@@ -1,6 +1,6 @@
 # Shiba（柴）
 
-Shiba is a minimalist replacement for [Calico](https://www.tigera.io/project-calico/).
+Shiba is a minimalist Kubernetes network plugin, as a replacement for [flannel](https://github.com/flannel-io/flannel), [Calico](https://www.tigera.io/project-calico/), etc.
 
 It provides the basic networking capabilities for Kubernetes, including:
 
@@ -11,7 +11,7 @@ It doesn't have advanced features like:
 
 - Network policy
 - Floating IPs
-- BIRD (who likes it?)
+- BGP routing (who likes it?)
 
 In a stable cluster, the functionality completely relies on the bundled CNI plugins and native Linux modules; Shiba daemon only works when a node has joined or left the cluster, or the node itself has rebooted.
 
