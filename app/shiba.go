@@ -79,6 +79,7 @@ func NewShiba(client kubernetes.Interface, nodeName, cniConfigPath string, optio
 func (shiba *Shiba) Run(stopCh <-chan struct{}) error {
 	go shiba.execute(stopCh)
 	go shiba.periodicFire(stopCh)
+watchLoop:
 	for {
 		watcher, err := shiba.client.CoreV1().Nodes().Watch(context.Background(), metav1.ListOptions{})
 		if err != nil {
@@ -94,7 +95,7 @@ func (shiba *Shiba) Run(stopCh <-chan struct{}) error {
 			case event, ok := <-watcherCh:
 				if !ok {
 					log.Info("watch channel closed")
-					break
+					continue watchLoop
 				}
 				shiba.processEvent(event)
 			}
