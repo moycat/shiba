@@ -1,8 +1,8 @@
-name: Build Shiba
+name: Build
 on: [ push, pull_request ]
 jobs:
   build:
-    name: Build ${{ matrix.arch }} on Ubuntu
+    name: Build ${{ matrix.arch }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
