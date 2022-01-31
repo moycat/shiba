@@ -30,14 +30,14 @@ func (shiba *Shiba) execute(stopCh <-chan struct{}) {
 }
 
 func (shiba *Shiba) syncTunnels(nodeMap model.NodeMap) {
-	log.Infof("syncing tunnels")
+	log.Info("syncing tunnels")
 	linkMap := make(map[string]*netlink.Ip6tnl)
 	tunnelMap := make(model.NodeMap, len(nodeMap)) // Tunnel name -> node.
 	for _, node := range nodeMap {
 		tunnelMap[node.Tunnel] = node
 	}
 
-	log.Debugf("examining existing tunnels")
+	log.Debug("examining existing tunnels")
 	links, err := netlink.LinkList()
 	if err != nil {
 		log.Errorf("failed to list links: %v", err)
@@ -60,7 +60,7 @@ func (shiba *Shiba) syncTunnels(nodeMap model.NodeMap) {
 		}
 	}
 
-	log.Debugf("applying tunnels")
+	log.Debug("applying tunnels")
 	for linkName, node := range tunnelMap {
 		link, ok := linkMap[linkName]
 		if ok {
@@ -103,7 +103,7 @@ func (shiba *Shiba) syncTunnels(nodeMap model.NodeMap) {
 }
 
 func (shiba *Shiba) syncRoutes(nodeMap model.NodeMap) {
-	log.Infof("syncing routes")
+	log.Info("syncing routes")
 	for _, node := range nodeMap {
 		link, err := netlink.LinkByName(node.Tunnel)
 		if err != nil {

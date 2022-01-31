@@ -44,13 +44,13 @@ func (shiba *Shiba) initNAT() error {
 		if err := addRules(util.V4tables, iptablesChain, v4Subnets); err != nil {
 			return fmt.Errorf("failed to setup nat for v4 subnets: %w", err)
 		}
-		log.Infof("ipv4 nat rules are ready")
+		log.Info("ipv4 nat rules are ready")
 	}
 	if len(v6Subnets) > 0 {
 		if err := addRules(util.V6tables, iptablesChain, v6Subnets); err != nil {
 			return fmt.Errorf("failed to setup nat for v6 subnets: %w", err)
 		}
-		log.Infof("ipv6 nat rules are ready")
+		log.Info("ipv6 nat rules are ready")
 	}
 	return nil
 }

@@ -20,7 +20,7 @@ import (
 
 func main() {
 	if os.Geteuid() != 0 {
-		log.Fatalf("shiba must be run as root")
+		log.Fatal("shiba must be run as root")
 	}
 	config := parseConfig()
 	client := getKubernetesClient(config.KubeConfigPath)
