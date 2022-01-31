@@ -16,9 +16,9 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: "1.17"
-      - run: go build -ldflags "-w -s" -o "shiba_${{ matrix.arch }}" github.com/moycat/shiba/cmd
+      - run: go build -ldflags "-w -s" -o "output/shiba_${{ matrix.arch }}" github.com/moycat/shiba/cmd
       - uses: actions/upload-artifact@v2
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         with:
           name: "shiba_${{ matrix.arch }}"
-          path: "shiba_${{ matrix.arch }}"
+          path: "output/shiba_${{ matrix.arch }}"

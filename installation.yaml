@@ -17,13 +17,13 @@ kind: ClusterRole
 metadata:
   name: shiba
 rules:
-  - apiGroups: [""]
-    resources: ["nodes"]
-    verbs: ["get", "watch", "list"]
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    resourceNames: ["kubeadm-config"]
-    verbs: ["get"]
+  - apiGroups: [ "" ]
+    resources: [ "nodes" ]
+    verbs: [ "get", "watch", "list" ]
+  - apiGroups: [ "" ]
+    resources: [ "configmaps" ]
+    resourceNames: [ "kubeadm-config" ]
+    verbs: [ "get" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
