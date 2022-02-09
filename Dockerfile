@@ -5,7 +5,7 @@ COPY . /src
 
 RUN CGO_ENABLED=0 go build -ldflags "-w -s" -o output/shiba github.com/moycat/shiba/cmd
 
-FROM debian:11-slim
+FROM debian:10-slim
 
 RUN apt update && apt install -y iptables && apt clean && rm -rf /var/lib/apt/lists/* /var/log/dpkg.log /var/log/apt/*
 
