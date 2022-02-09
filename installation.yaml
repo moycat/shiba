@@ -79,7 +79,7 @@ spec:
 #            - name: SHIBA_CLUSTERPODCIDRS
 #              value: "192.168.0.0/16,fddd:dead:beef::/48"
 #            - name: SHIBA_PPROFPORT
-#              value: "8888"
+#              value: "7442"
 #            - name: SHIBA_DEBUG
 #              value: "true"
           volumeMounts:
