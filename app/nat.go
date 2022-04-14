@@ -13,6 +13,10 @@ func (shiba *Shiba) initNAT() error {
 		if err := tables.NewChainUnique("nat", chain); err != nil {
 			return fmt.Errorf("failed to create a unique chain: %w", err)
 		}
+		if err := tables.AppendUnique("nat", chain, "-p", "tcp", "-m", "tcp", "--tcp-flags", "SYN,RST", "SYN",
+			"-j", "TCPMSS", "--clamp-mss-to-pmtu"); err != nil {
+			return fmt.Errorf("failed to enable tcp mss clamping: %w", err)
+		}
 		if err := tables.AppendUnique("nat", chain, "-j", "MASQUERADE"); err != nil {
 			return fmt.Errorf("failed to append the nat rule: %w", err)
 		}
