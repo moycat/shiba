@@ -9,7 +9,7 @@ It provides the basic networking capabilities for Kubernetes, including:
 
 It doesn't have advanced features like:
 
-- Network policy
+- Network policies
 - Floating IPs
 - BGP routing (who likes it?)
 
