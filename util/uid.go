@@ -19,7 +19,7 @@ func init() {
 // Don't use it concurrently. Not thread safe.
 func NewUID() string {
 	b := make([]byte, 4)
-	binary.LittleEndian.PutUint32(b, uint32(time.Now().Unix()))
+	binary.LittleEndian.PutUint32(b, uint32(time.Now().UnixNano()))
 	counter++
 	b = append(b, counter)
 	return strings.ToLower(base32.StdEncoding.EncodeToString(b))
