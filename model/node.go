@@ -21,7 +21,7 @@ func (n *Node) DiffersFrom(nn *Node) bool {
 	if n == nil && nn == nil {
 		return false
 	}
-	if (n != nil && nn == nil) || (n == nil && nn != nil) {
+	if (n == nil) != (nn == nil) {
 		return true
 	}
 	if n.Name != nn.Name {

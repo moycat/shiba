@@ -10,8 +10,11 @@ import (
 	"syscall"
 
 	"github.com/moycat/shiba/model"
+	"github.com/moycat/shiba/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (shiba *Shiba) getAPIContext() (context.Context, func()) {
@@ -69,6 +72,52 @@ func (shiba *Shiba) loadNodeMap() {
 		return
 	}
 	shiba.saveNodeMap(nodeMap)
+	shiba.validateNodeMap()
+}
+
+func (shiba *Shiba) validateNodeMap() {
+	ctx, cancel := context.WithTimeout(context.Background(), shiba.apiTimeout)
+	defer cancel()
+	nodes, err := shiba.client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		log.Errorf("failed to list nodes: %v", err)
+		shiba.nodeMap = nil // Drop the map since we can't validate it.
+		return
+	}
+	nodeMap := make(map[string]corev1.Node, nodes.Size())
+	for _, node := range nodes.Items {
+		nodeMap[node.Name] = node
+	}
+	var badNodes []string
+	for name, node := range shiba.nodeMap {
+		n, ok := nodeMap[name]
+		if !ok {
+			log.Warningf("node [%s] loaded from cache doesn't exist, removing", name)
+			badNodes = append(badNodes, name)
+			continue
+		}
+		nodeIP := util.FindNodeIPv6(&n)
+		if nodeIP == nil {
+			log.Warningf("node [%s] loaded from cache no longer has an IPv6 address, removing", name)
+			badNodes = append(badNodes, name)
+			continue
+		}
+		nodePodCIDRs, err := util.ParseNodePodCIDRs(&n)
+		if err != nil {
+			log.Warningf("failed to parse pod cidrs of node [%s]: %v", name, err)
+			badNodes = append(badNodes, name)
+			continue
+		}
+		if node.DiffersFrom(&model.Node{Name: name, IP: nodeIP, PodCIDRs: nodePodCIDRs}) {
+			log.Warningf("node [%s] IP or pod CIDRs changed, removing", name)
+			log.Debugf("IP: [%v]/[%v], CIDRs:%s/%s", node.IP, nodeIP, node.PodCIDRs, util.FormatIPNets(nodePodCIDRs))
+			badNodes = append(badNodes, name)
+			continue
+		}
+	}
+	for _, badNode := range badNodes {
+		delete(shiba.nodeMap, badNode)
+	}
 }
 
 func (shiba *Shiba) dumpNodeMap() {
