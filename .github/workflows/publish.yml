@@ -9,7 +9,7 @@ on:
         description: 'Push latest'
         required: false
         type: boolean
-        default: 'true'
+        default: true
       dry-run:
         description: 'Dry run'
         required: false
