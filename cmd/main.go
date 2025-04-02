@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
@@ -23,7 +24,15 @@ func main() {
 	if os.Geteuid() != 0 {
 		log.Fatal("shiba must be run as root")
 	}
-	config := parseConfig()
+	config := newConfig()
+	config.InitFlags(flag.CommandLine)
+	flag.Parse()
+	if err := config.Validate(); err != nil {
+		fmt.Println("node name is empty!")
+		fmt.Println()
+		flag.CommandLine.Usage()
+		os.Exit(2)
+	}
 	client := getKubernetesClient(config.KubeConfigPath)
 	options := getShibaOptions(config)
 	shiba, err := app.NewShiba(client, config.NodeName, config.CNIConfigPath, options)

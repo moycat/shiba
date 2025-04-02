@@ -1,8 +1,8 @@
 package main
 
 import (
+	"errors"
 	"flag"
-	"fmt"
 	"os"
 
 	"github.com/jinzhu/configor"
@@ -46,7 +46,30 @@ type Config struct {
 	IP6tnlMTU int
 }
 
-func parseConfig() *Config {
+func (c *Config) InitFlags(set *flag.FlagSet) {
+	set.StringVar(&c.NodeName, "node-name", c.NodeName, "current node name")
+	set.StringVar(&c.CNIConfigPath, "cni-config-path", c.CNIConfigPath, "CNI config path")
+	set.StringVar(&c.KubeConfigPath, "kube-config-path", c.KubeConfigPath, "K8s config file path")
+	set.IntVar(&c.APITimeout, "api-timeout", c.APITimeout, "K8s API timeout in seconds")
+	set.StringVar(&c.ClusterPodCIDRs, "cluster-pod-cidrs", c.ClusterPodCIDRs, "cluster pod CIDRs")
+	set.IntVar(&c.PprofPort, "pprof-port", c.PprofPort, "pprof debug server port")
+	set.IntVar(&c.IP6tnlMTU, "ip6tnl-mtu", c.IP6tnlMTU, "the MTU for ip6tnl interface")
+}
+
+func (c *Config) Validate() error {
+	if len(c.NodeName) == 0 {
+		return errors.New("node name is empty")
+	}
+	if len(c.CNIConfigPath) == 0 {
+		c.CNIConfigPath = defaultCNIConfigPath
+	}
+	if c.APITimeout <= 0 {
+		c.APITimeout = defaultAPITimeout
+	}
+	return nil
+}
+
+func newConfig() *Config {
 	var config Config
 	loader := configor.New(&configor.Config{
 		ENVPrefix: envPrefix,
@@ -55,28 +78,6 @@ func parseConfig() *Config {
 	})
 	if err := loader.Load(&config); err != nil {
 		log.Fatalf("failed to load config: %v", err)
-	}
-	set := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	set.StringVar(&config.NodeName, "node-name", config.NodeName, "current node name")
-	set.StringVar(&config.CNIConfigPath, "cni-config-path", config.CNIConfigPath, "CNI config path")
-	set.StringVar(&config.KubeConfigPath, "kube-config-path", config.KubeConfigPath, "K8s config file path")
-	set.IntVar(&config.APITimeout, "api-timeout", config.APITimeout, "K8s API timeout in seconds")
-	set.StringVar(&config.ClusterPodCIDRs, "cluster-pod-cidrs", config.ClusterPodCIDRs, "cluster pod CIDRs")
-	set.IntVar(&config.PprofPort, "pprof-port", config.PprofPort, "pprof debug server port")
-	set.IntVar(&config.IP6tnlMTU, "ip6tnl-mtu", config.IP6tnlMTU, "the MTU for ip6tnl interface")
-	_ = set.Parse(os.Args[1:])
-	if len(config.NodeName) == 0 {
-		fmt.Println("node name is empty!")
-		fmt.Println()
-		set.Usage()
-		os.Exit(2)
-		return nil
-	}
-	if len(config.CNIConfigPath) == 0 {
-		config.CNIConfigPath = defaultCNIConfigPath
-	}
-	if config.APITimeout <= 0 {
-		config.APITimeout = defaultAPITimeout
 	}
 	return &config
 }
