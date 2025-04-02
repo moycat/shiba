@@ -41,6 +41,9 @@ type Config struct {
 	ClusterPodCIDRs string
 	// PprofPort specifies the port of pprof debug server, non-positive to disable.
 	PprofPort int
+
+	// IP6tnlMTU is the MTU for ip6tnl interface. when not config, default is 1450.
+	IP6tnlMTU int
 }
 
 func parseConfig() *Config {
@@ -60,6 +63,7 @@ func parseConfig() *Config {
 	set.IntVar(&config.APITimeout, "api-timeout", config.APITimeout, "K8s API timeout in seconds")
 	set.StringVar(&config.ClusterPodCIDRs, "cluster-pod-cidrs", config.ClusterPodCIDRs, "cluster pod CIDRs")
 	set.IntVar(&config.PprofPort, "pprof-port", config.PprofPort, "pprof debug server port")
+	set.IntVar(&config.IP6tnlMTU, "ip6tnl-mtu", config.IP6tnlMTU, "the MTU for ip6tnl interface")
 	_ = set.Parse(os.Args[1:])
 	if len(config.NodeName) == 0 {
 		fmt.Println("node name is empty!")

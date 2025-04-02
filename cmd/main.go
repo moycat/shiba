@@ -10,12 +10,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/moycat/shiba/app"
-	"github.com/moycat/shiba/util"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/moycat/shiba/app"
+	"github.com/moycat/shiba/util"
 )
 
 func main() {
@@ -50,6 +51,7 @@ func getShibaOptions(config *Config) app.ShibaOptions {
 		}
 		options.ClusterPodCIDRs = cidrs
 	}
+	options.IP6tnlMTU = config.IP6tnlMTU
 	return options
 }
 
