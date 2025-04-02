@@ -32,4 +32,5 @@ func Test_parseConfig_from_env(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, cfg.IP6tnlMTU, 1500)
 	assert.Equal(t, cfg.NodeName, "hello")
+	assert.Equal(t, cfg.CNIConfigPath, defaultCNIConfigPath)
 }
