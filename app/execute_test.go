@@ -14,10 +14,9 @@ func TestShiba_createIp6tnl(t *testing.T) {
 		ip6tnlMTU: 1500,
 	}
 	link, err := s.createIp6tnl("hello", &model.Node{
-		IP: net.ParseIP("2605:340:cd52:100:39a:464d:c85c:e08a4"),
+		IP: net.ParseIP("2605:340:cd52:100:39a:464d:c85c:e08a"),
 	})
 	assert.NilError(t, err)
 	assert.Equal(t, "hello", link.Name)
 	assert.Equal(t, 1500, link.Attrs().MTU)
-
 }

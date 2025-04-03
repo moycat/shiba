@@ -27,12 +27,7 @@ func main() {
 	config := newConfig()
 	config.InitFlags(flag.CommandLine)
 	flag.Parse()
-	if err := config.Validate(); err != nil {
-		fmt.Println("node name is empty!")
-		fmt.Println()
-		flag.CommandLine.Usage()
-		os.Exit(2)
-	}
+	exitOnError(config.Validate())
 	client := getKubernetesClient(config.KubeConfigPath)
 	options := getShibaOptions(config)
 	shiba, err := app.NewShiba(client, config.NodeName, config.CNIConfigPath, options)
@@ -49,9 +44,16 @@ func main() {
 	}
 }
 
+func exitOnError(err error) {
+	_, _ = fmt.Fprintf(os.Stderr, "%v\n\n", err)
+	flag.Usage()
+	os.Exit(2)
+}
+
 func getShibaOptions(config *Config) app.ShibaOptions {
 	options := app.ShibaOptions{
 		APITimeout: time.Duration(config.APITimeout) * time.Second,
+		IP6tnlMTU:  config.IP6tnlMTU,
 	}
 	if len(config.ClusterPodCIDRs) > 0 {
 		cidrs, err := util.ParseIPNets(strings.Split(config.ClusterPodCIDRs, ","))
@@ -60,7 +62,6 @@ func getShibaOptions(config *Config) app.ShibaOptions {
 		}
 		options.ClusterPodCIDRs = cidrs
 	}
-	options.IP6tnlMTU = config.IP6tnlMTU
 	return options
 }
 
