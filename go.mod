@@ -1,6 +1,6 @@
 module github.com/moycat/shiba
 
-go 1.17
+go 1.18
 
 require (
 	github.com/coreos/go-iptables v0.6.0
