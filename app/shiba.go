@@ -7,10 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/moycat/shiba/model"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/moycat/shiba/model"
 )
 
 const (
@@ -37,12 +38,14 @@ type Shiba struct {
 	nodeMapLock     sync.Mutex
 	fireCh          chan struct{}
 	apiTimeout      time.Duration
+	ip6tnlMTU       int // the mtu config for ip6tnl interface
 }
 
 // ShibaOptions specifies the non-essential options for Shiba.
 type ShibaOptions struct {
 	APITimeout      time.Duration
 	ClusterPodCIDRs []*net.IPNet
+	IP6tnlMTU       int
 }
 
 // NewShiba returns a new instance of Shiba.
@@ -56,6 +59,7 @@ func NewShiba(client kubernetes.Interface, nodeName, cniConfigPath string, optio
 		fireCh:          make(chan struct{}, 1),
 		apiTimeout:      options.APITimeout,
 		clusterPodCIDRs: options.ClusterPodCIDRs,
+		ip6tnlMTU:       options.IP6tnlMTU,
 	}
 	if err := shiba.initSelf(); err != nil {
 		return nil, fmt.Errorf("failed to get info about self: %w", err)

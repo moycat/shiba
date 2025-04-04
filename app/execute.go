@@ -1,13 +1,15 @@
 package app
 
 import (
+	"errors"
 	"net"
 	"strings"
 	"time"
 
-	"github.com/moycat/shiba/model"
 	log "github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
+
+	"github.com/moycat/shiba/model"
 )
 
 func (shiba *Shiba) execute(stopCh <-chan struct{}) {
@@ -75,10 +77,10 @@ func (shiba *Shiba) syncTunnels(nodeMap model.NodeMap) {
 			}
 		}
 		log.Infof("creating tunnel [%s] to node [%s] (%v)", linkName, node.Name, node.IP)
-		link = &netlink.Ip6tnl{
-			LinkAttrs: netlink.LinkAttrs{Name: linkName},
-			Local:     shiba.nodeIP,
-			Remote:    node.IP,
+		link, err := shiba.createIp6tnl(linkName, node)
+		if err != nil {
+			log.Errorf("failed to create tunnel [%s] to node [%s]: %v", linkName, node.Name, err)
+			continue
 		}
 		if err := netlink.LinkAdd(link); err != nil {
 			log.Errorf("failed to create tunnel [%s]: %v", linkName, err)
@@ -100,6 +102,20 @@ func (shiba *Shiba) syncTunnels(nodeMap model.NodeMap) {
 			continue
 		}
 	}
+}
+
+func (shiba *Shiba) createIp6tnl(linkName string, node *model.Node) (*netlink.Ip6tnl, error) {
+	if node == nil {
+		return nil, errors.New("node is nil")
+	}
+	return &netlink.Ip6tnl{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: linkName,
+			MTU:  shiba.ip6tnlMTU,
+		},
+		Local:  shiba.nodeIP,
+		Remote: node.IP,
+	}, nil
 }
 
 func (shiba *Shiba) syncRoutes(nodeMap model.NodeMap) {

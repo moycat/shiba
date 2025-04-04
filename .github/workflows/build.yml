@@ -1,6 +1,23 @@
 name: Build
 on: [ push, pull_request ]
 jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run tests
+        run: |-
+          go version
+          go test ./... -v -race -coverprofile=coverage.out -covermode=atomic
+
   build:
     name: Build ${{ matrix.arch }}
     runs-on: ubuntu-latest
@@ -12,10 +29,14 @@ jobs:
       GOOS: "linux"
       GOARCH: "${{ matrix.arch }}"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.18"
+          go-version-file: 'go.mod'
+
       - run: go build -ldflags "-w -s" -o "output/shiba_${{ matrix.arch }}" github.com/moycat/shiba/cmd
       - uses: actions/upload-artifact@v4
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'

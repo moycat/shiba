@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
@@ -10,19 +11,23 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/moycat/shiba/app"
-	"github.com/moycat/shiba/util"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/moycat/shiba/app"
+	"github.com/moycat/shiba/util"
 )
 
 func main() {
 	if os.Geteuid() != 0 {
 		log.Fatal("shiba must be run as root")
 	}
-	config := parseConfig()
+	config := newConfig()
+	config.InitFlags(flag.CommandLine)
+	flag.Parse()
+	exitOnError(config.Validate())
 	client := getKubernetesClient(config.KubeConfigPath)
 	options := getShibaOptions(config)
 	shiba, err := app.NewShiba(client, config.NodeName, config.CNIConfigPath, options)
@@ -39,9 +44,16 @@ func main() {
 	}
 }
 
+func exitOnError(err error) {
+	_, _ = fmt.Fprintf(os.Stderr, "%v\n\n", err)
+	flag.Usage()
+	os.Exit(2)
+}
+
 func getShibaOptions(config *Config) app.ShibaOptions {
 	options := app.ShibaOptions{
 		APITimeout: time.Duration(config.APITimeout) * time.Second,
+		IP6tnlMTU:  config.IP6tnlMTU,
 	}
 	if len(config.ClusterPodCIDRs) > 0 {
 		cidrs, err := util.ParseIPNets(strings.Split(config.ClusterPodCIDRs, ","))
