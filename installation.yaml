@@ -78,6 +78,8 @@ spec:
               value: "/etc/cni/net.d"
 #            - name: SHIBA_CLUSTERPODCIDRS
 #              value: "192.168.0.0/16,fddd:dead:beef::/48"
+#            - name: SHIBA_IP6TNLMTU
+#              value: "1500"
 #            - name: SHIBA_PPROFPORT
 #              value: "7442"
 #            - name: SHIBA_DEBUG
