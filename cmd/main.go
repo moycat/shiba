@@ -45,9 +45,11 @@ func main() {
 }
 
 func exitOnError(err error) {
-	_, _ = fmt.Fprintf(os.Stderr, "%v\n\n", err)
-	flag.Usage()
-	os.Exit(2)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "%v\n\n", err)
+		flag.Usage()
+		os.Exit(2)
+	}
 }
 
 func getShibaOptions(config *Config) app.ShibaOptions {
